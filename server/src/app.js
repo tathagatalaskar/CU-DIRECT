@@ -1,0 +1,18 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import morgan from 'morgan';
+import {config} from './config.js';
+import authRoutes from './routes/auth.js';
+import requestRoutes from './routes/requests.js';
+import noticeRoutes from './routes/notices.js';
+import feedbackRoutes from './routes/feedback.js';
+import {notFound,errors} from './middleware/errors.js';
+const app=express();
+app.use(helmet());app.use(cors({origin:config.clientUrl,credentials:true}));app.use(express.json({limit:'1mb'}));app.use(morgan(config.nodeEnv==='production'?'combined':'dev'));
+app.use('/api',rateLimit({windowMs:15*60*1000,limit:300,standardHeaders:true,legacyHeaders:false}));
+app.get('/api/health',(req,res)=>res.json({status:'ok',service:'cu-direct-api',time:new Date().toISOString()}));
+app.use('/api/auth',authRoutes);app.use('/api/requests',requestRoutes);app.use('/api/notices',noticeRoutes);app.use('/api/feedback',feedbackRoutes);
+app.use(notFound);app.use(errors);
+export default app;
